@@ -117,7 +117,17 @@ export class ExpoSQLitePreparedQuery<T extends PreparedQueryConfig = PreparedQue
 	run(placeholderValues?: Record<string, unknown>): SQLiteRunResult {
 		const params = fillPlaceholders(this.query.params, placeholderValues ?? {});
 		this.logger.logQuery(this.query.sql, params);
-		const { changes, lastInsertRowId } = this.stmt.executeSync(params as any[]);
+		const statement = this.stmt;
+		let values;
+
+		try {
+			values = statement.executeSync(params as any[]);
+		} finally {
+			statement.finalizeSync()
+		}
+
+		const { changes, lastInsertRowId } = values;
+		
 		return {
 			changes,
 			lastInsertRowId,
